@@ -8,7 +8,6 @@ from typing import Tuple
 
 class MtyperApp:
     imageExtensions = ['.png', '.jpg', '.tif', '.tiff', '.svg']
-    defaultWindowSize = (1024, 768)
 
     def __init__(self) -> None:
         resourcesPath = os.path.join(
@@ -19,7 +18,7 @@ class MtyperApp:
         pygame.init()
         pygame.display.set_caption("mtyper")
         pygame.key.set_repeat(0)
-        self.screen = pygame.display.set_mode(MtyperApp.defaultWindowSize)
+        self.screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
         self.font = pygame.font.SysFont('DejaVu Sans Mono', 75)
         self.clock = pygame.time.Clock()
 
@@ -61,8 +60,8 @@ class MtyperApp:
         current = None
         words = []
         screenSize = self.screen.get_size()
-        imgPosCenter = (int(screenSize[0] / 2), int(screenSize[1] * 0.45))
-        wordPosCenter = (int(screenSize[0] / 2), int(screenSize[1] * 0.87))
+        imgPosCenter = (int(screenSize[0] / 2), int(screenSize[1] * 0.35))
+        wordPosCenter = (int(screenSize[0] / 2), int(screenSize[1] * 0.80))
 
         while running:
             # load the word to be typed
