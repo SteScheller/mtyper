@@ -15,6 +15,7 @@ class MtyperApp:
             os.path.dirname(os.path.abspath(__file__)),
             'resources')
 
+        pygame.mixer.pre_init(44100, -16, 2, 512)
         pygame.init()
         pygame.display.set_caption("mtyper")
         pygame.key.set_repeat(0)
@@ -23,7 +24,7 @@ class MtyperApp:
         self.clock = pygame.time.Clock()
 
         self.wordItems = []
-        for item in os.scandir(resourcesPath):
+        for item in os.scandir(os.path.join(resourcesPath, 'words')):
             if item.is_file() and \
                     (os.path.splitext(item.name)[1].lower() in \
                         MtyperApp.imageExtensions):
@@ -32,6 +33,11 @@ class MtyperApp:
 
         for item in self.wordItems:
             print(item)
+
+        self.soundPing = pygame.mixer.Sound(
+                os.path.join(resourcesPath, 'sounds/ping.wav'))
+        self.soundKey = pygame.mixer.Sound(
+                os.path.join(resourcesPath, 'sounds/keypress.wav'))
 
     def resizeImage(
             self,
@@ -83,12 +89,14 @@ class MtyperApp:
                     elif (key == 'return') or (key == 'space'):
                         if targetLetters == typedLetters:
                             current = None
+                            self.soundPing.play()
                     elif len(typedLetters) < len(targetLetters):
                         index = len(typedLetters)
                         target = targetLetters[index]
                         actual = event.unicode
                         if target.lower() == actual.lower():
                             typedLetters.append(targetLetters[index])
+                            self.soundKey.play()
 
             # draw the image, target and typed letters
             self.screen.fill((255, 255, 255))
