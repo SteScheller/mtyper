@@ -4,9 +4,13 @@ import os
 import sys
 import pygame
 import random
+from typing import Tuple
 
 class MtyperApp:
-    def __init__(self):
+    imageExtensions = ['.png', '.jpg', '.tif', '.tiff', '.svg']
+    defaultWindowSize = (1024, 768)
+
+    def __init__(self) -> None:
         resourcesPath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'resources')
@@ -14,35 +18,56 @@ class MtyperApp:
         pygame.init()
         pygame.display.set_caption("mtyper")
         pygame.key.set_repeat(0)
-        self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode(MtyperApp.defaultWindowSize)
         self.font = pygame.font.SysFont('DejaVu Sans Mono', 75)
         self.clock = pygame.time.Clock()
 
         self.wordItems = []
         for item in os.scandir(resourcesPath):
-            if (item.is_file() and os.path.splitext(item.name)[1] == '.png'):
+            if item.is_file() and \
+                    (os.path.splitext(item.name)[1].lower() in \
+                        MtyperApp.imageExtensions):
                 self.wordItems.append(
                     (os.path.splitext(item.name)[0], item.path))
 
         for item in self.wordItems:
             print(item)
 
-    def run(self):
+    def resizeImage(
+            self,
+            img: pygame.Surface,
+            maxDim: Tuple[int, int]=(800, 600)) -> pygame.Surface:
+        rect = img.get_rect()
+        if (rect.width > maxDim[0]) or (rect.height > maxDim[1]):
+            ratio = rect.width / rect.height
+            if rect.width > rect.height:
+                newDim = (maxDim[0], int(maxDim[0] / ratio))
+            else:
+                newDim = (int(maxDim[1] * ratio), maxDim[1])
+            resized = pygame.transform.scale(img, newDim)
+        else:
+            resized = img
+
+        return resized
+
+    def run(self) -> pygame.Surface:
         running = True
         current = None
         words = []
+        screenSize = self.screen.get_size()
+        imgPosCenter = (int(screenSize[0] / 2), int(screenSize[1] * 0.45))
+        wordPosCenter = (int(screenSize[0] / 2), int(screenSize[1] * 0.87))
 
         while running:
             # load the word to be typed
-            if len(words) is 0:
+            if len(words) == 0:
                 words = [item for item in self.wordItems]
                 random.shuffle(words)
+
             if current is None:
                 current = words.pop()
                 (wordString, wordImgPath) = current
-                wordImg = pygame.image.load(wordImgPath)
-                wordImg = pygame.transform.scale(
-                    pygame.image.load(wordImgPath), (200, 200))
+                wordImg = self.resizeImage(pygame.image.load(wordImgPath))
                 targetLetters = [l for l in wordString]
                 typedLetters = []
 
@@ -67,19 +92,27 @@ class MtyperApp:
 
             # draw the image, target and typed letters
             self.screen.fill((255, 255, 255))
-            self.screen.blit(wordImg, (50, 50))
-            for i, letter in enumerate(targetLetters):
-                if i < len(typedLetters):
-                    color = (103, 169, 207)
-                else:
-                    color = (100, 100, 100)
-                self.screen.blit(
-                    self.font.render(letter.upper(), True, color),
-                    (50 + i * 50, 400))
+            self.screen.blit(
+                wordImg,
+                (   int(imgPosCenter[0] - (0.5 * wordImg.get_rect().width)),
+                    int(imgPosCenter[1] - (0.5 * wordImg.get_rect().height)) ))
+            wordSurface = self.font.render(
+                    ''.join(targetLetters).upper(), True, (100, 100, 100))
+            wordCoord = \
+                (   int(wordPosCenter[0] -
+                        (0.5 * wordSurface.get_rect().width)),
+                    int(wordPosCenter[1] -
+                        (0.5 * wordSurface.get_rect().height))  )
+            self.screen.blit( wordSurface, wordCoord)
+            self.screen.blit(
+                self.font.render(
+                    ''.join(typedLetters).upper(),
+                    True,
+                    (103, 169, 207)),
+                wordCoord)
 
             pygame.display.update()
             self.clock.tick(60)
-
 
         sys.exit(0)
 
